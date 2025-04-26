@@ -1,10 +1,331 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>My Flask App</title>
+  <meta charset="UTF-8">
+  <title>To-Do App</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Poppins', 'Segoe UI', sans-serif;
+      background: linear-gradient(-45deg, #6a11cb, #2575fc, #6a11cb, #2575fc);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      overflow-x: hidden;
+      position: relative;
+      transition: background 0.5s ease, color 0.5s ease;
+    }
+
+    @keyframes gradientBG {
+      0% {background-position: 0% 50%;}
+      50% {background-position: 100% 50%;}
+      100% {background-position: 0% 50%;}
+    }
+
+    .todo-box {
+      background: white;
+      padding: 50px;
+      border-radius: 25px;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+      width: 100%;
+      max-width: 650px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      align-items: center;
+      animation: fadeIn 1s ease;
+      transition: background 0.5s ease, color 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h2 {
+      font-size: 32px;
+      font-weight: 600;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .check-icon {
+      color: green;
+      font-size: 26px;
+    }
+
+    input[type="text"],
+    input[type="date"],
+    select {
+      width: 100%;
+      padding: 14px 18px;
+      border: none;
+      border-radius: 30px;
+      background: #f7f7f7;
+      outline: none;
+      font-size: 17px;
+      transition: all 0.3s ease;
+      font-family: 'Poppins', 'Segoe UI', sans-serif;
+    }
+
+    input[type="text"]:focus,
+    input[type="date"]:focus,
+    select:focus {
+      background: #e6e6e6;
+    }
+
+    button {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 30px;
+      background-color: #2575fc;
+      color: white;
+      font-size: 19px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      font-family: 'Poppins', 'Segoe UI', sans-serif;
+    }
+
+    button:hover {
+      background-color: #1a5be0;
+    }
+
+    #taskList {
+      margin-top: 25px;
+      width: 100%;
+    }
+
+    .task-item {
+      background: #f5f5f5;
+      margin: 12px 0;
+      padding: 12px 16px;
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: 'Poppins', 'Segoe UI', sans-serif;
+      font-size: 16px;
+      animation: bounceIn 0.5s ease;
+      transition: background 0.5s ease, color 0.5s ease;
+    }
+
+    @keyframes bounceIn {
+      0% { transform: scale(0.5); opacity: 0; }
+      60% { transform: scale(1.1); opacity: 1; }
+      80% { transform: scale(0.9); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes fadeOut {
+      from { opacity: 1; transform: translateX(0); }
+      to { opacity: 0; transform: translateX(50px); }
+    }
+
+    .fade-out {
+      animation: fadeOut 0.5s forwards;
+    }
+
+    .completed {
+      text-decoration: line-through;
+      color: gray;
+    }
+
+    .delete-btn {
+      background-color: transparent;
+      padding: 6px 10px;
+      font-size: 20px;
+      border: none;
+      cursor: pointer;
+      color: #ff5e7e;
+      transition: transform 0.2s;
+    }
+
+    .delete-btn:hover {
+      transform: scale(1.2);
+    }
+
+    .toast {
+      position: fixed;
+      top: 30px;
+      right: 30px;
+      background-color: #2575fc;
+      color: white;
+      padding: 14px 22px;
+      border-radius: 30px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      opacity: 0;
+      pointer-events: none;
+      animation: toastInOut 3s forwards;
+      z-index: 999;
+      font-size: 16px;
+      font-family: 'Poppins', 'Segoe UI', sans-serif;
+    }
+
+    @keyframes toastInOut {
+      0% { opacity: 0; transform: translateY(-20px);}
+      10% { opacity: 1; transform: translateY(0);}
+      90% { opacity: 1; transform: translateY(0);}
+      100% { opacity: 0; transform: translateY(-20px);}
+    }
+
+    /* 🌟 Priority colors */
+    .task-item.low { border-left: 8px solid #4caf50; }     /* Green */
+    .task-item.medium { border-left: 8px solid #ff9800; }  /* Orange */
+    .task-item.high { border-left: 8px solid #f44336; }    /* Red */
+
+    /* 🌟 Dark Mode styles */
+    body.dark {
+      background: #121212;
+      color: #f5f5f5;
+    }
+
+    body.dark .todo-box {
+      background: #1e1e1e;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7);
+    }
+
+    body.dark .task-item {
+      background: #2c2c2c;
+      color: #eee;
+    }
+
+    body.dark input,
+    body.dark select {
+      background: #333;
+      color: #eee;
+    }
+
+    body.dark input:focus,
+    body.dark select:focus {
+      background: #444;
+    }
+
+    body.dark .delete-btn {
+      color: #ff5e7e;
+    }
+
+    /* 🌟 Toggle button small and fixed at top-left */
+    .toggle-btn {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      padding: 5px 10px;
+      font-size: 14px;
+      border-radius: 20px;
+      background: rgba(0, 0, 0, 0.4);
+      color: white;
+      border: none;
+      cursor: pointer;
+      z-index: 9999;
+      transition: background 0.3s ease;
+    }
+
+    .toggle-btn:hover {
+      background: rgba(0, 0, 0, 0.6);
+    }
+
+    body.dark .toggle-btn {
+      background: rgba(255, 255, 255, 0.2);
+    }
+  </style>
 </head>
+
 <body>
-    <h1>Hello from Flask!</h1>
+  <!-- 🌟 Toggle Button -->
+  <button class="toggle-btn" onclick="toggleMode()">🌗</button>
+
+  <div class="todo-box">
+    <h2>To-Do List <span class="check-icon">✔️</span></h2>
+
+    <input type="text" id="taskInput" placeholder="e.g. eating" />
+    <select id="prioritySelect">
+      <option value="Low">Low</option>
+      <option value="Medium" selected>Medium</option>
+      <option value="High">High</option>
+    </select>
+    <input type="date" id="taskDate" />
+    <button onclick="addTask()">Add</button>
+
+    <div id="taskList"></div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script>
+    function createTaskElement(taskText, priority, date) {
+      const div = document.createElement('div');
+      div.classList.add('task-item', priority.toLowerCase());  // 🌟 Priority Class
+
+      const span = document.createElement('span');
+      span.textContent = `${taskText} (${priority}) - ${date || 'No Date'}`;
+
+      const delBtn = document.createElement('button');
+      delBtn.innerHTML = '🗑️';
+      delBtn.className = 'delete-btn';
+
+      delBtn.onclick = () => {
+        div.classList.add('fade-out');
+        setTimeout(() => {
+          div.remove();
+          showToast('❌ Task Deleted!');
+        }, 500);
+      };
+
+      div.appendChild(span);
+      div.appendChild(delBtn);
+
+      return div;
+    }
+
+    function addTask() {
+      const taskInput = document.getElementById('taskInput');
+      const prioritySelect = document.getElementById('prioritySelect');
+      const datePicker = document.getElementById('taskDate');
+
+      const taskText = taskInput.value.trim();
+      const priority = prioritySelect.value;
+      const date = datePicker.value;
+
+      if (!taskText) return;
+
+      const taskList = document.getElementById('taskList');
+      const newTask = createTaskElement(taskText, priority, date);
+
+      taskList.appendChild(newTask);
+
+      taskInput.value = '';
+      datePicker.value = '';
+
+      showToast('✅ Task Added!');
+    }
+
+    function showToast(message) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = message;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
+    }
+
+    // 🌟 Dark Mode Toggle Function
+    function toggleMode() {
+      document.body.classList.toggle('dark');
+    }
+  </script>
 </body>
 </html>
